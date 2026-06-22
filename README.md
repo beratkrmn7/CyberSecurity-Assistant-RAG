@@ -15,7 +15,7 @@ Microsoft Yaz Stajı "Azure Foundry Local LLM" projesi kapsamında geliştirilme
 
 1. Depoyu klonlayın:
 ```bash
-git clone <repo-url>
+git clone https://github.com/beratkrmn7/CyberSecurity-Assistant-RAG.git
 ```
 
 2. Sanal ortamı aktif edin ve gereksinimleri yükleyin:
