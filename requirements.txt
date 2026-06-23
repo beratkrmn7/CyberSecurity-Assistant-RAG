@@ -8,3 +8,4 @@ python-dotenv
 jupyter
 langchain-huggingface
 streamlit
+langchain-ollama
