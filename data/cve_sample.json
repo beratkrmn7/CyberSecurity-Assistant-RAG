@@ -1,21 +1,21 @@
 [
   {
     "cve_id": "CVE-2021-44228",
-    "description": "Apache Log4j2 <=2.14.1 JNDI features used in configuration, log messages, and parameters do not protect against attacker controlled LDAP and other JNDI related endpoints. An attacker who can control log messages or log message parameters can execute arbitrary code loaded from LDAP servers when message lookup substitution is enabled.",
+    "description": "Apache Log4j2 (2.14.1 ve öncesi) sürümlerinde konfigürasyon, log mesajları ve parametrelerde kullanılan JNDI özellikleri, saldırgan kontrollü LDAP ve diğer JNDI tabanlı uç noktalara karşı koruma sağlamaz. Log mesajlarını veya log parametrelerini kontrol edebilen bir saldırgan, sistemde rastgele kod çalıştırabilir ve sunucuyu tamamen ele geçirebilir. Bu zafiyet Log4Shell olarak bilinir.",
     "severity": "CRITICAL",
     "cvss_score": 10.0,
     "published_date": "2021-12-10"
   },
   {
     "cve_id": "CVE-2024-3094",
-    "description": "Malicious code was discovered in the upstream tarballs of xz, starting with version 5.6.0. Through a series of complex obfuscations, the liblzma build process extracts a prebuilt object file from a disguised test file existing in the source code, which modifies specific functions in the liblzma code. This results in a modified liblzma library that can be used by any software linked against this library, intercepting and modifying the data interaction with this library.",
+    "description": "XZ Utils kütüphanesinin (5.6.0 sürümünden itibaren) kaynak kodlarında gizlenmiş zararlı bir arka kapı (backdoor) kod keşfedildi. Derleme işlemi sırasında liblzma içindeki bazı fonksiyonlar değiştirilerek sisteme sızılır. Bu durum, liblzma kütüphanesini kullanan SSH gibi yazılımların veri etkileşimlerinin ele geçirilmesine ve saldırganın sisteme yetkisiz erişimine olanak tanır.",
     "severity": "CRITICAL",
     "cvss_score": 10.0,
     "published_date": "2024-03-29"
   },
   {
     "cve_id": "CVE-2017-0144",
-    "description": "The SMBv1 server in Microsoft Windows Vista SP2; Windows Server 2008 SP2 and R2 SP1; Windows 7 SP1; Windows 8.1; Windows Server 2012 Gold and R2; Windows RT 8.1; and Windows 10 Gold, 1511, and 1607; and Windows Server 2016 allows remote attackers to execute arbitrary code via crafted packets, aka 'Windows SMB Remote Code Execution Vulnerability'. This vulnerability was exploited by the EternalBlue tool.",
+    "description": "Microsoft Windows (Vista, 7, 8.1, 10) ve Windows Server işletim sistemlerindeki SMBv1 sunucusu, uzaktaki saldırganların ağ üzerinden özel olarak hazırlanmış paketler göndererek rastgele kod çalıştırmasına (Remote Code Execution) izin verir. Bu zafiyet 'EternalBlue' aracı tarafından aktif olarak sömürülmüş ve WannaCry fidye yazılımının yayılmasına sebep olmuştur.",
     "severity": "CRITICAL",
     "cvss_score": 8.1,
     "published_date": "2017-03-16"
