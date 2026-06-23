@@ -2,7 +2,11 @@ from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.llms import Ollama
 from langchain_core.prompts import PromptTemplate
-from langchain.chains import RetrievalQA
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
 
 def main():
     print("1. Vektor veritabani (ChromaDB) yukleniyor...")
@@ -32,13 +36,17 @@ Uzman Cevabi:"""
     
     QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
     
-    # RAG Zinciri: Soru -> Veritabaninda Arama -> Prompt hazirlama -> LLM'e gonderme
-    qa_chain = RetrievalQA.from_chain_type(
-        llm,
-        retriever=retriever,
-        return_source_documents=True,
-        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}
+    # Modern LCEL RAG Mimarisi
+    rag_chain_from_docs = (
+        RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
+        | QA_CHAIN_PROMPT
+        | llm
+        | StrOutputParser()
     )
+    
+    rag_chain_with_source = RunnableParallel(
+        {"context": retriever, "question": RunnablePassthrough()}
+    ).assign(answer=rag_chain_from_docs)
     
     # Kullanici ile sohbet (CLI) dongusu
     print("==================================================")
@@ -54,15 +62,15 @@ Uzman Cevabi:"""
         print("\n[!] Veritabaninda taranip asistan tarafindan isleniyor, lutfen bekleyin...")
         
         # Asistana soruyu gonderiyoruz
-        result = qa_chain.invoke({"query": user_query})
+        result = rag_chain_with_source.invoke(user_query)
         
         # Cevabi yazdiriyoruz
         print("\n🤖 Asistanin Cevabi:")
-        print(result["result"])
+        print(result["answer"])
         
         # Yapay zekanin bu cevabi verirken okudugu gercek belgeleri listeleyelim (Seffaflik icin onemli)
         print("\n[Faydalanilan Kaynaklar]:")
-        for i, doc in enumerate(result["source_documents"]):
+        for i, doc in enumerate(result["context"]):
             print(f"- Kaynak {i+1} | CVE ID: {doc.metadata.get('cve_id')}")
 
 if __name__ == "__main__":
