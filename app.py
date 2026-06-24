@@ -1,132 +1,263 @@
 import streamlit as st
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_groq import ChatGroq
+import sqlite3
+import json
+import numpy as np
+from sentence_transformers import SentenceTransformer
+import requests
 import os
 from dotenv import load_dotenv
 
-load_dotenv() # .env dosyasından API anahtarını yükler
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough
-from langchain_core.output_parsers import StrOutputParser
+load_dotenv()
 
 # Sayfa ayarlarini yapiyoruz
-st.set_page_config(page_title="Siber Güvenlik Asistanı", layout="wide")
+st.set_page_config(page_title="Siber Güvenlik Asistanı", layout="wide", page_icon="🛡️")
 
-# Temiz, Minimalist Tasarim (Gemini Benzeri)
+# Modern Koyu Tema - Siber Güvenlik Estetiği
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap');
-    
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    /* ─── GENEL ZEMIN ─── */
     .stApp {
-        font-family: 'Outfit', sans-serif;
-        background: radial-gradient(circle at 50% 50%, rgba(227, 242, 253, 0.4) 0%, rgba(255, 255, 255, 1) 50%);
+        font-family: 'Inter', sans-serif;
     }
     
-    /* Yan menü arka planı bembeyaz */
+    /* Ana içerik alanı arka planı */
+    .main .block-container {
+        padding-top: 2rem;
+    }
+
+    /* ─── SIDEBAR ─── */
     [data-testid="stSidebar"] {
-        background-color: #ffffff;
+        border-right: 1px solid rgba(128, 128, 128, 0.2);
     }
     
-    /* Yeni sohbet butonu pill şeklinde ve üstte */
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 1.2rem;
+    }
+
+    /* Yeni Sohbet butonu */
     [data-testid="stSidebar"] button[kind="secondary"] {
-        border-radius: 20px;
-        text-align: left;
-        border: none;
-        background-color: #f0f4f9; 
-        color: #1f1f1f;
-        font-weight: 500;
-        padding: 10px 15px;
-        margin-bottom: 10px;
+        border-radius: 8px !important;
+        border: 1px solid rgba(128, 128, 128, 0.3) !important;
+        background-color: var(--secondary-background-color) !important;
+        font-weight: 500 !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.875rem !important;
+        padding: 8px 14px !important;
+        margin-bottom: 8px;
+        transition: all 0.2s ease !important;
     }
     [data-testid="stSidebar"] button[kind="secondary"]:hover {
-        background-color: #e8eaed;
+        border-color: var(--primary-color) !important;
     }
-    
-    /* Geçmiş aramalar listesi */
+
+    /* Geçmiş oturum butonları */
     [data-testid="stSidebar"] button[kind="tertiary"] {
-        text-align: left;
-        font-weight: 400;
-        font-size: 0.9rem;
-        color: #444746;
-        padding-left: 10px;
-        border-radius: 20px !important;
-        transition: background-color 0.2s ease;
+        text-align: left !important;
+        font-size: 0.82rem !important;
+        border-radius: 6px !important;
+        padding: 6px 10px !important;
+        transition: all 0.15s ease !important;
+        font-family: 'Inter', sans-serif !important;
     }
     [data-testid="stSidebar"] button[kind="tertiary"]:hover {
-        background-color: #f0f4f9 !important;
+        background-color: rgba(128, 128, 128, 0.1) !important;
     }
-    
-    /* Popover (3 nokta) içindeki varsayılan aşağı okunu (chevron) gizle */
-    [data-testid="stPopover"] button svg {
+
+    /* Popover Buton Stili (3 Nokta Menüsü için) */
+    [data-testid="stPopover"] > button {
+        border: none !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        padding: 4px !important;
+        color: var(--text-color) !important;
+    }
+    [data-testid="stPopover"] > button:hover {
+        background-color: rgba(128, 128, 128, 0.1) !important;
+    }
+    /* Popover chevron (ok) gizleme */
+    [data-testid="stPopover"] > button svg {
         display: none !important;
     }
-    
+
+    /* ─── BAŞLIK ─── */
     .main-header {
         text-align: center;
-        font-weight: 400;
-        font-size: 2.2rem;
-        margin-top: 1rem;
-        margin-bottom: 2rem;
-        color: #1f1f1f;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 1.75rem;
+        letter-spacing: -0.02em;
+        margin-top: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .main-subtitle {
+        text-align: center;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.72rem;
+        color: var(--primary-color);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+    }
+
+    /* ─── DIVIDER ─── */
+    hr {
+        border: none !important;
+        border-top: 1px solid rgba(128, 128, 128, 0.2) !important;
+        margin: 0.5rem 0 1.5rem 0 !important;
+    }
+
+    /* ─── CHAT MESAJLARI ─── */
+    [data-testid="stChatMessage"] {
+        background-color: transparent !important;
+        border: none !important;
+        padding: 0.6rem 0 !important;
     }
     
-    .stChatInputContainer {
-        border-radius: 24px !important;
-        border: 1px solid #e0e0e0 !important;
-        background-color: white !important;
-        padding: 0px !important;
+    /* Kullanıcı mesajı baloncuğu */
+    [data-testid="stChatMessage"][data-testid*="user"] .stMarkdown,
+    .stChatMessage:has([data-testid="chatAvatarIcon-user"]) .stMarkdown p {
+        background-color: rgba(128, 128, 128, 0.1);
+        border: 1px solid rgba(128, 128, 128, 0.2);
+        border-radius: 12px;
+        padding: 10px 14px;
+    }
+
+    /* Asistan mesaj metni */
+    [data-testid="stChatMessage"] .stMarkdown p {
+        font-size: 0.92rem;
+        line-height: 1.7;
+    }
+
+    /* Avatar ikonları */
+    [data-testid="chatAvatarIcon-assistant"] {
+        background: rgba(88, 166, 255, 0.1) !important;
+        border: 1px solid #58A6FF !important;
+        border-radius: 8px !important;
+        color: #58A6FF !important;
+    }
+    [data-testid="chatAvatarIcon-user"] {
+        background: rgba(63, 185, 80, 0.1) !important;
+        border: 1px solid #3FB950 !important;
+        border-radius: 8px !important;
+        color: #3FB950 !important;
+    }
+
+    /* ─── EXPANDER (Kaynaklar) ─── */
+    [data-testid="stExpander"] {
+        background-color: var(--secondary-background-color) !important;
+        border: 1px solid rgba(128, 128, 128, 0.2) !important;
+        border-radius: 8px !important;
+    }
+    [data-testid="stExpander"] summary {
+        color: #58A6FF !important;
+        font-size: 0.8rem !important;
+        font-family: 'JetBrains Mono', monospace !important;
+    }
+    [data-testid="stExpander"] p, [data-testid="stExpander"] div {
+        font-size: 0.82rem !important;
+        font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    /* ─── CHAT INPUT ─── */
+    [data-testid="stChatInput"] textarea {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.9rem !important;
+    }
+    [data-testid="stChatInput"] button {
+        background-color: var(--primary-color) !important;
+        border-radius: 8px !important;
+    }
+
+    /* ─── SPINNER ─── */
+    [data-testid="stSpinner"] p {
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Caption */
+    .stCaption, [data-testid="stCaption"] {
+        font-size: 0.72rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        opacity: 0.6;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.5); }
+
+    /* ─── PULSE ÇIZGISI (SOL KENAR SİGNATURE ELEMENTİ) ─── */
+    [data-testid="stSidebar"]::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -1px;
+        width: 1px;
+        height: 100%;
+        background: linear-gradient(180deg, transparent 0%, #58A6FF 30%, #3FB950 70%, transparent 100%);
+        opacity: 0.4;
+        animation: pulse-line 4s ease-in-out infinite;
+    }
+    @keyframes pulse-line {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 0.6; }
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='main-header'>Siber Güvenlik Asistanı</div>", unsafe_allow_html=True)
+st.markdown("""
+<div class='main-header'>🛡️ Siber Güvenlik Asistanı</div>
+<div class='main-subtitle'>Threat Intelligence · CVE Analysis · RAG-Powered</div>
+""", unsafe_allow_html=True)
 st.divider()
 
-# RAG Sistemini baslatiyoruz ve onbellege aliyoruz (Her seferinde bastan yuklenmemesi icin)
+# Modeli önbelleğe alıyoruz
 @st.cache_resource
-def init_rag_system():
-    # Embedding
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    
-    # Vector DB
-    vector_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
-    retriever = vector_db.as_retriever(search_kwargs={"k": 2})
-    
-    # LLM (Arka planda Groq API calismalidir) - Halusinasyonu onlemek icin temperature=0.0
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.0)
-    
-    # Prompt - Phi-3 icin Chat formatinda
-    system_template = """Sen uzman bir siber güvenlik asistanısın. Görevin, sana verilen 'Bağlam' (Context) bilgilerini kullanarak kullanıcının sorusunu SADECE TÜRKÇE, kısa, net ve anlaşılır bir şekilde cevaplamaktır. 
-    Eğer sorunun cevabı bağlamda yoksa kesinlikle uydurma yapma ve "Bu bilgiye sahip değilim." de. Asla kendi kendine soru üretme veya şıklar (A, B, C) oluşturma.
-    
-Bağlam:
-{context}"""
+def load_embedding_model():
+    return SentenceTransformer("all-MiniLM-L6-v2")
 
-    QA_CHAIN_PROMPT = ChatPromptTemplate.from_messages([
-        ("system", system_template),
-        ("human", "{question}")
-    ])
-    
-    def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
-        
-    rag_chain_from_docs = (
-        RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
-        | QA_CHAIN_PROMPT
-        | llm
-        | StrOutputParser()
-    )
-    
-    return rag_chain_from_docs, retriever
-
-# Asistani Baslat
 try:
-    with st.spinner("Yapay Zeka Modelleri Yüklendi... Lütfen bekleyin."):
-        qa_chain_base, retriever = init_rag_system()
+    with st.spinner("Yerel Yapay Zeka Modeli Yükleniyor... Lütfen bekleyin."):
+        embedding_model = load_embedding_model()
 except Exception as e:
-    st.error(f"Sistem baslatilirken hata olustu: {e}")
+    st.error(f"Sistem başlatılırken hata oluştu: {e}")
     st.stop()
+
+def compute_cosine_similarity(vec1, vec2):
+    dot_product = np.dot(vec1, vec2)
+    norm_a = np.linalg.norm(vec1)
+    norm_b = np.linalg.norm(vec2)
+    if norm_a == 0 or norm_b == 0: return 0.0
+    return dot_product / (norm_a * norm_b)
+
+def get_top_chunks(query, top_k=2):
+    query_vector = embedding_model.encode(query).tolist()
+    
+    conn = sqlite3.connect("knowledge_base.db")
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT cve_id, text_chunk, embedding_vector FROM documents")
+        rows = cursor.fetchall()
+    except Exception:
+        return []
+    finally:
+        conn.close()
+        
+    scored_chunks = []
+    for row in rows:
+        cve_id, text_chunk, vec_json = row
+        db_vector = json.loads(vec_json)
+        sim_score = compute_cosine_similarity(query_vector, db_vector)
+        scored_chunks.append({"cve_id": cve_id, "text": text_chunk, "score": sim_score})
+        
+    scored_chunks.sort(key=lambda x: x["score"], reverse=True)
+    return scored_chunks[:top_k]
 
 # Chat gecmisi (Oturum kayitlari) ve Gecmis Oturumlar
 if "sessions" not in st.session_state:
@@ -157,26 +288,50 @@ if prompt := st.chat_input("Log4j (Log4Shell) zafiyeti nasıl çalışır? Nası
         
     # Asistan cevabi
     with st.chat_message("assistant"):
-        docs = retriever.invoke(prompt)
+        top_chunks = get_top_chunks(prompt, top_k=2)
         
-        response_placeholder = st.empty()
-        full_response = ""
-        
-        # Streaming (Kelime kelime yazdirma)
-        for chunk in qa_chain_base.stream({"context": docs, "question": prompt}):
-            full_response += chunk
-            response_placeholder.markdown(full_response + "▌")
+        if not top_chunks:
+            full_response = "Yerel veritabanında (SQLite) bu soruya uygun bir bilgi bulunamadı. Lütfen önce '01_data_ingestion.py' çalıştırarak veritabanını oluşturun."
+            st.markdown(full_response)
+            source_list = []
+        else:
+            context_text = "\n\n".join([chunk["text"] for chunk in top_chunks])
+            system_prompt = "Sen uzman bir siber güvenlik asistanısın. Aşağıdaki bağlam (context) bilgilerini kullanarak kullanıcının sorusunu SADECE TÜRKÇE, kısa, net ve anlaşılır bir şekilde cevaplamaktır. Eğer sorunun cevabı bağlamda yoksa kesinlikle uydurma yapma ve 'Bu bilgiye sahip değilim.' de."
+            full_prompt = f"Bağlam:\n{context_text}\n\nSoru: {prompt}\nCevap:"
             
-        # Imleci kaldir ve son metni koy
-        response_placeholder.markdown(full_response)
-        
-        # Kaynaklari hazirla ve goster
-        source_list = [f"Kayıt İncelemesi: {doc.metadata.get('cve_id')}" for doc in docs]
-        if source_list:
-            with st.expander("Kaynakları Gör"):
-                for source in source_list:
-                    st.write(f"- {source}")
-                    
+            response_placeholder = st.empty()
+            full_response = ""
+            
+            # Ollama Streaming API (Microsoft Foundry Local alternatifi)
+            url = "http://localhost:11434/api/generate"
+            payload = {
+                "model": "phi3", 
+                "prompt": full_prompt,
+                "system": system_prompt,
+                "stream": True
+            }
+            
+            try:
+                with requests.post(url, json=payload, stream=True) as r:
+                    r.raise_for_status()
+                    for line in r.iter_lines():
+                        if line:
+                            chunk_data = json.loads(line)
+                            full_response += chunk_data.get("response", "")
+                            response_placeholder.markdown(full_response + "▌")
+            except Exception as e:
+                full_response = f"Yerel LLM bağlantısı kurulamadı. Hata: {e}\n\nLütfen arka planda Microsoft Foundry Local veya Ollama'nın çalıştığından emin olun."
+                
+            # Imleci kaldir ve son metni koy
+            response_placeholder.markdown(full_response)
+            
+            # Kaynaklari hazirla ve goster (SQLite log)
+            source_list = [f"SQLite'tan Çekildi: {chunk['cve_id']} (Benzerlik Skoru: %{chunk['score']*100:.1f})" for chunk in top_chunks]
+            if source_list:
+                with st.expander("Kaynakları Gör (Yerel Veritabanı)"):
+                    for source in source_list:
+                        st.write(f"- {source}")
+                        
     # Asistan mesajini gecmise ekle
     st.session_state.messages.append({"role": "assistant", "content": full_response, "sources": source_list})
 
@@ -246,8 +401,8 @@ with st.sidebar:
                         st.rerun()
                 
                 with col2:
-                    # Üç nokta popover menüsü
-                    with st.popover("⋮", use_container_width=True):
+                    # Üç nokta popover menüsü (Material Icon)
+                    with st.popover("", icon=":material/more_vert:", use_container_width=True):
                         # Sabitleme Butonu
                         pin_label = "Sabitlemeyi Kaldır" if is_pinned else "Sabitle"
                         if st.button(pin_label, key=f"pin_btn_{i}_{short_title}", use_container_width=True):

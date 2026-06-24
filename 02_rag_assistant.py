@@ -1,77 +1,122 @@
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.llms import Ollama
-from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough
-from langchain_core.output_parsers import StrOutputParser
+import sqlite3
+import json
+import numpy as np
+from sentence_transformers import SentenceTransformer
+import requests
 
-def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
+DB_NAME = "knowledge_base.db"
 
-def main():
-    print("1. Vektor veritabani (ChromaDB) yukleniyor...")
-    # Verileri kaydederken kullandigimiz ayni embedding modelini yukluyoruz
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    
-    # Diskteki ChromaDB veritabanina baglaniyoruz
-    vector_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
-    
-    # Veritabaninda arama yapacak mekanizma (En benzer 2 parcayi getir)
-    retriever = vector_db.as_retriever(search_kwargs={"k": 2})
-    
-    print("2. Yerel LLM (Ollama - Phi-3) baglantisi kuruluyor...")
-    # Bilgisayarinizda arka planda calisan Ollama'ya baglanir
-    llm = Ollama(model="phi3")
-    
-    print("3. Siber Guvenlik Asistani Hazirlaniyor...\n")
-    # Asistana nasil davranmasi gerektigini soyleyen Sistem Promptu
-    template = """Sen uzman bir siber guvenlik asistanisin. Sana verilen asagidaki sistem baglami (context) bilgilerini kullanarak kullanicinin sorusunu cevapla. Eger cevabi asagidaki baglamda bulamazsan, "Bununla ilgili yerel veritabanimda bilgi bulunmamaktadir" de ve uydurma yapma.
+def compute_cosine_similarity(vec1, vec2):
+    """İki vektör arasındaki Kosinüs Benzerliğini (Cosine Similarity) hesaplar."""
+    dot_product = np.dot(vec1, vec2)
+    norm_a = np.linalg.norm(vec1)
+    norm_b = np.linalg.norm(vec2)
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot_product / (norm_a * norm_b)
 
-Baglam (Context):
-{context}
-
-Kullanicinin Sorusu: {question}
-
-Uzman Cevabi:"""
+def get_top_chunks(query, top_k=2):
+    """
+    SQLite veritabanından tüm embedding'leri çeker, kullanıcının sorgusuyla 
+    kosinüs benzerliğini hesaplar ve en ilgili (en yüksek skorlu) parçaları döndürür.
+    Bu tam olarak PDF'te istenen 'Search for similar vectors in SQLite' aşamasıdır.
+    """
+    # 1. Sorguyu embed et
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+    query_vector = model.encode(query).tolist()
     
-    QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
+    # 2. Veritabanındaki tüm vektörleri çek
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
     
-    # Modern LCEL RAG Mimarisi
-    rag_chain_from_docs = (
-        RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
-        | QA_CHAIN_PROMPT
-        | llm
-        | StrOutputParser()
+    try:
+        cursor.execute("SELECT cve_id, text_chunk, embedding_vector FROM documents")
+        rows = cursor.fetchall()
+    except sqlite3.OperationalError:
+        print(f"HATA: '{DB_NAME}' veritabanı bulunamadı. Lütfen önce '01_data_ingestion.py' çalıştırın.")
+        return []
+    finally:
+        conn.close()
+        
+    # 3. Benzerlikleri hesapla
+    scored_chunks = []
+    for row in rows:
+        cve_id, text_chunk, vec_json = row
+        db_vector = json.loads(vec_json)
+        
+        sim_score = compute_cosine_similarity(query_vector, db_vector)
+        scored_chunks.append({
+            "cve_id": cve_id,
+            "text": text_chunk,
+            "score": sim_score
+        })
+        
+    # 4. En yüksek skorlu ilk K parçayı döndür
+    scored_chunks.sort(key=lambda x: x["score"], reverse=True)
+    return scored_chunks[:top_k]
+
+def call_local_llm(context_text, user_question):
+    """
+    Yerel LLM modelini çağırır. 
+    Not: Projede Microsoft Foundry Local SDK istenmektedir ancak kurulu olmadığı için
+    şimdilik yerel Ollama API (localhost:11434) ile simüle ediyoruz.
+    Foundry Local SDK kurulduğunda buraya `foundry_local.completeChat(...)` entegre edilmelidir.
+    """
+    system_prompt = (
+        "Sen uzman bir siber güvenlik asistanısın. Aşağıdaki bağlam (context) bilgilerini "
+        "kullanarak kullanıcının sorusunu cevapla. Eğer cevap bağlamda yoksa 'Bilmiyorum' de."
     )
     
-    rag_chain_with_source = RunnableParallel(
-        {"context": retriever, "question": RunnablePassthrough()}
-    ).assign(answer=rag_chain_from_docs)
+    full_prompt = f"Bağlam:\n{context_text}\n\nSoru: {user_question}\nCevap:"
     
-    # Kullanici ile sohbet (CLI) dongusu
+    # Ollama REST API çağrısı
+    url = "http://localhost:11434/api/generate"
+    payload = {
+        "model": "phi3", # veya sahip olduğunuz başka bir model (örn: llama3)
+        "prompt": full_prompt,
+        "system": system_prompt,
+        "stream": False
+    }
+    
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        return response.json().get("response", "Cevap üretilemedi.")
+    except Exception as e:
+        return f"LLM bağlantı hatası: {e}\nNot: Lütfen bilgisayarınızda yerel modelin çalıştığından emin olun."
+
+def main():
     print("==================================================")
-    print("🤖 Siber Guvenlik Asistani Aktif (Cikmak icin 'q' yazin)")
+    print("🤖 Siber Güvenlik Asistanı (SQLite & Local RAG)")
     print("==================================================\n")
     
     while True:
-        user_query = input("\nSorunuz (Orn: Log4j zafiyeti nasil calisir?): ")
-        if user_query.lower() in ['q', 'quit', 'cikis', 'exit']:
-            print("Gorusmek uzere! Guvende kalin.")
+        user_query = input("\nSorunuz (Çıkmak için 'q'): ")
+        if user_query.lower() in ['q', 'quit', 'exit']:
+            print("Görüşmek üzere!")
             break
             
-        print("\n[!] Veritabaninda taranip asistan tarafindan isleniyor, lutfen bekleyin...")
+        print("\n[!] Veritabanında (SQLite) kosinüs benzerliği (cosine similarity) ile taranıyor...")
+        top_chunks = get_top_chunks(user_query, top_k=2)
         
-        # Asistana soruyu gonderiyoruz
-        result = rag_chain_with_source.invoke(user_query)
+        if not top_chunks:
+            print("Hata: İlgili bilgi bulunamadı veya veritabanı boş.")
+            continue
+            
+        print(f"[+] En yüksek benzerliğe sahip {len(top_chunks)} belge parçası bulundu.")
         
-        # Cevabi yazdiriyoruz
-        print("\n🤖 Asistanin Cevabi:")
-        print(result["answer"])
+        # Bağlamı birleştir
+        context_text = "\n\n".join([chunk["text"] for chunk in top_chunks])
         
-        # Yapay zekanin bu cevabi verirken okudugu gercek belgeleri listeleyelim (Seffaflik icin onemli)
-        print("\n[Faydalanilan Kaynaklar]:")
-        for i, doc in enumerate(result["context"]):
-            print(f"- Kaynak {i+1} | CVE ID: {doc.metadata.get('cve_id')}")
+        print("\n[!] Yerel LLM'e (Offline) bağlanıp cevap üretiliyor...")
+        answer = call_local_llm(context_text, user_query)
+        
+        print("\n🤖 Asistanın Cevabı:")
+        print(answer)
+        
+        print("\n[Faydalanılan Kaynaklar (SQLite)]:")
+        for i, chunk in enumerate(top_chunks):
+            print(f"- Kaynak {i+1} | Skor: %{chunk['score']*100:.1f} | CVE ID: {chunk['cve_id']}")
 
 if __name__ == "__main__":
     main()
