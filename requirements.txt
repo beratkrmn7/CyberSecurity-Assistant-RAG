@@ -2,8 +2,7 @@ langchain
 langchain-community
 langchain-core
 chromadb
-sentence-transformers
-requests
+foundry-local-sdk
 python-dotenv
 jupyter
 langchain-huggingface

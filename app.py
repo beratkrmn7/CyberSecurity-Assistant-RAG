@@ -2,8 +2,7 @@ import streamlit as st
 import sqlite3
 import json
 import numpy as np
-from sentence_transformers import SentenceTransformer
-import requests
+from foundry_local_sdk import Configuration, FoundryLocalManager
 import os
 from dotenv import load_dotenv
 
@@ -217,14 +216,24 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.divider()
 
+# Foundry Local Kurulumu
+config = Configuration(app_name="cybersec-rag-assistant")
+try:
+    FoundryLocalManager.initialize(config)
+except Exception:
+    pass # Zaten initialize edilmiş olabilir
+manager = FoundryLocalManager.instance
+
 # Modeli önbelleğe alıyoruz
 @st.cache_resource
 def load_embedding_model():
-    return SentenceTransformer("all-MiniLM-L6-v2")
+    model = manager.catalog.get_model("qwen3-embedding-0.6b")
+    model.load()
+    return model.get_embedding_client()
 
 try:
-    with st.spinner("Yerel Yapay Zeka Modeli Yükleniyor... Lütfen bekleyin."):
-        embedding_model = load_embedding_model()
+    with st.spinner("Foundry Local Embedding Modeli Yükleniyor... Lütfen bekleyin."):
+        embed_client = load_embedding_model()
 except Exception as e:
     st.error(f"Sistem başlatılırken hata oluştu: {e}")
     st.stop()
@@ -237,7 +246,8 @@ def compute_cosine_similarity(vec1, vec2):
     return dot_product / (norm_a * norm_b)
 
 def get_top_chunks(query, top_k=2):
-    query_vector = embedding_model.encode(query).tolist()
+    vector_result = embed_client.generate_embedding(query)
+    query_vector = vector_result.data[0].embedding
     
     conn = sqlite3.connect("knowledge_base.db")
     cursor = conn.cursor()
@@ -288,6 +298,7 @@ if prompt := st.chat_input("Log4j (Log4Shell) zafiyeti nasıl çalışır? Nası
         
     # Asistan cevabi
     with st.chat_message("assistant"):
+        # Model hızlandığı için daha fazla bilgi okuyabilmesi adına top_k'yı tekrar 2 yapıyoruz
         top_chunks = get_top_chunks(prompt, top_k=2)
         
         if not top_chunks:
@@ -297,30 +308,44 @@ if prompt := st.chat_input("Log4j (Log4Shell) zafiyeti nasıl çalışır? Nası
         else:
             context_text = "\n\n".join([chunk["text"] for chunk in top_chunks])
             system_prompt = "Sen uzman bir siber güvenlik asistanısın. Aşağıdaki bağlam (context) bilgilerini kullanarak kullanıcının sorusunu SADECE TÜRKÇE, kısa, net ve anlaşılır bir şekilde cevaplamaktır. Eğer sorunun cevabı bağlamda yoksa kesinlikle uydurma yapma ve 'Bu bilgiye sahip değilim.' de."
-            full_prompt = f"Bağlam:\n{context_text}\n\nSoru: {prompt}\nCevap:"
+            
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Bağlam:\n{context_text}\n\nSoru: {prompt}"}
+            ]
             
             response_placeholder = st.empty()
             full_response = ""
             
-            # Ollama Streaming API (Microsoft Foundry Local alternatifi)
-            url = "http://localhost:11434/api/generate"
-            payload = {
-                "model": "phi3", 
-                "prompt": full_prompt,
-                "system": system_prompt,
-                "stream": True
-            }
-            
             try:
-                with requests.post(url, json=payload, stream=True) as r:
-                    r.raise_for_status()
-                    for line in r.iter_lines():
-                        if line:
-                            chunk_data = json.loads(line)
-                            full_response += chunk_data.get("response", "")
-                            response_placeholder.markdown(full_response + "▌")
+                # 0.5B model çok saçmaladığı için, hem hızlı hem de daha zeki olan 1.5 Milyar parametreli modele geçiyoruz
+                chat_model = manager.catalog.get_model("qwen2.5-1.5b")
+                
+                # Modelin daha önceden (01_data_ingestion.py ile) indirildiğini varsayıyoruz
+                chat_model.load()
+                
+                # get_chat_client() veya create_chat_client() kullanılıyor
+                chat_client = chat_model.create_chat_client() if hasattr(chat_model, "create_chat_client") else chat_model.get_chat_client()
+                
+                # Modelin cevabı çok uzatıp CPU'yu kilitlememesi için kelime sayısını 200 ile sınırlıyoruz
+                chat_client.settings.max_tokens = 200
+                # Modelin halüsinasyonunu engellemek için sadece temperature kullanıyoruz.
+                chat_client.settings.temperature = 0.1
+                
+                # Harf harf (streaming) yerine tek seferde cevap almak için complete_chat kullanıyoruz
+                # Streamlit arayüzünü her harfte yenilemek CPU'yu çok yorduğu için bu yöntem çok daha hızlı olacaktır.
+                with st.spinner("Asistan cevabı hazırlıyor, lütfen bekleyin..."):
+                    response_obj = chat_client.complete_chat(messages)
+                    if hasattr(response_obj, "choices") and response_obj.choices:
+                        full_response = response_obj.choices[0].message.content or ""
+                    else:
+                        full_response = "Cevap üretilemedi."
+                        
+                    response_placeholder.markdown(full_response)
             except Exception as e:
-                full_response = f"Yerel LLM bağlantısı kurulamadı. Hata: {e}\n\nLütfen arka planda Microsoft Foundry Local veya Ollama'nın çalıştığından emin olun."
+                import traceback
+                error_details = traceback.format_exc()
+                full_response = f"Yerel LLM (Foundry Local) bağlantısı kurulamadı. Hata detayları:\n\n```python\n{error_details}\n```\n\nLütfen arka planda Microsoft Foundry Local'ın çalıştığından emin olun."
                 
             # Imleci kaldir ve son metni koy
             response_placeholder.markdown(full_response)

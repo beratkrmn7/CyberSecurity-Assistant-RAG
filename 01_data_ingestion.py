@@ -3,9 +3,8 @@ import sqlite3
 import os
 import math
 
-# Not: Foundry Local SDK sistemde bulunamadığı için, embedding işlemini 
-# yerel çalışan HuggingFace SentenceTransformers ile DOĞRUDAN yapıyoruz (Langchain olmadan).
-from sentence_transformers import SentenceTransformer
+# Yerel embedding işlemini Microsoft Foundry Local SDK ile yapıyoruz.
+from foundry_local_sdk import Configuration, FoundryLocalManager
 
 DB_NAME = "knowledge_base.db"
 
@@ -78,13 +77,23 @@ def main():
             
     print(f"Toplam {len(all_chunks)} parça (chunk) oluştu.\n")
     
-    print("4. Embedding (Vektör) modeli yükleniyor... (Local / Offline)")
-    embeddings_model = SentenceTransformer("all-MiniLM-L6-v2")
+    print("4. Embedding (Vektör) modeli yükleniyor... (Microsoft Foundry Local)")
+    config = Configuration(app_name="cybersec-rag-assistant")
+    FoundryLocalManager.initialize(config)
+    manager = FoundryLocalManager.instance
+    
+    # PDF'te önerilen qwen3-embedding-0.6b modeli
+    model = manager.catalog.get_model("qwen3-embedding-0.6b")
+    print("Model indiriliyor ve yükleniyor...")
+    model.download()
+    model.load()
+    embed_client = model.get_embedding_client()
     
     print("\n5. Vektörler hesaplanıp SQLite veritabanına kaydediliyor...")
     for chunk in all_chunks:
         # Metni vektöre çevir
-        vector = embeddings_model.encode(chunk["text"]).tolist()
+        vector_result = embed_client.generate_embedding(chunk["text"])
+        vector = vector_result.data[0].embedding
         
         # Vektörü SQLite'da tutabilmek için JSON string'e çeviriyoruz
         vector_json = json.dumps(vector)
@@ -97,6 +106,19 @@ def main():
         
     conn.commit()
     conn.close()
+    
+    print("\n6. Chat (Sohbet) Modeli önceden indiriliyor... (Microsoft Foundry Local)")
+    chat_model = manager.catalog.get_model("qwen2.5-1.5b")
+    print("Qwen 1.5B LLM Modeli İndiriliyor (Bu işlem yaklaşık 1 GB dosya indirecektir, lütfen bekleyin)...")
+    
+    # Konsolda yüzde göstermek için ufak bir callback
+    import sys
+    def update_progress(progress):
+        sys.stdout.write(f"\rİndirme durumu: %{progress:.1f}")
+        sys.stdout.flush()
+        
+    chat_model.download(update_progress)
+    print("\nModel başarıyla indirildi!")
     
     print("\n[OK] İşlem tamamlandı! Veriler, metin parçacıkları ve vektörleriyle birlikte")
     print(f"'{DB_NAME}' adlı yerel SQLite veritabanına başarıyla kaydedildi.")
