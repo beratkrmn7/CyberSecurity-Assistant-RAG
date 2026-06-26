@@ -6,21 +6,43 @@ Microsoft Yaz Stajı "Azure Foundry Local LLM" projesi kapsamında geliştirilme
 
 ## Kullanılan Teknolojiler
 
-- Python
-- LangChain
-- ChromaDB (Vektör Veritabanı)
-- Ollama / Yerel LLM
+- **Python**
+- **Streamlit**: Modern ve kullanıcı dostu web arayüzü için.
+- **Microsoft Foundry Local SDK**: Yerel LLM (`qwen2.5-1.5b`) ve Embedding (`qwen3-embedding-0.6b`) modellerinin yönetimi için.
+- **SQLite**: Vektör veritabanı olarak metin parçacıklarını ve embedding vektörlerini saklamak için.
+- **NumPy**: Vektörler arası kosinüs benzerliği (cosine similarity) hesaplamaları için.
+
+*(Not: Projede LangChain veya ChromaDB yerine tamamen Foundry Local SDK ve yerel SQLite entegrasyonu kullanılmıştır.)*
+
+## Proje Yapısı
+
+- `01_data_ingestion.py`: JSON formatındaki CVE verilerini işleme, parçalama (chunking), embedding oluşturma ve SQLite veritabanına kaydetme adımlarını içerir. Gerekli dil modellerini de yerel ortama indirir.
+- `app.py`: Streamlit tabanlı, modern web arayüzü. Yerel LLM ile sohbet ve vektör tabanlı bilgi araması burada gerçekleşir.
+- `02_rag_assistant.py`: (Opsiyonel) CLI üzerinden temel RAG sistemini test etmek için betik.
 
 ## Kurulum
 
-1. Depoyu klonlayın:
+1. Depoyu klonlayın ve klasöre girin:
 ```bash
 git clone https://github.com/beratkrmn7/CyberSecurity-Assistant-RAG.git
+cd CyberSecurity-Assistant-RAG
 ```
 
-2. Sanal ortamı aktif edin ve gereksinimleri yükleyin:
+2. Sanal ortam oluşturup aktif edin ve gereksinimleri yükleyin (Windows):
 ```bash
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+## Kullanım
+
+1. Öncelikle veritabanını (`knowledge_base.db`) oluşturmak ve LLM modellerini indirmek için veri yükleme betiğini çalıştırın:
+```bash
+python 01_data_ingestion.py
+```
+
+2. İşlem tamamlandıktan sonra asistanın web arayüzünü başlatın:
+```bash
+streamlit run app.py
 ```
