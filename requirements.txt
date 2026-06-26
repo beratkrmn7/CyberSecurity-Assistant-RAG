@@ -1,11 +1,6 @@
-langchain
-langchain-community
-langchain-core
-chromadb
+streamlit
+numpy
 foundry-local-sdk
 python-dotenv
-jupyter
-langchain-huggingface
-streamlit
-langchain-ollama
-langchain-groq
+sentence-transformers
+requests
