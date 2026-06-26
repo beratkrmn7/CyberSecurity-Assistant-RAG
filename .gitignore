@@ -12,12 +12,10 @@ pip-delete-this-directory.txt
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Environments
+venv/
 .env
-
-# Vector Database
-.chroma/
-chroma_db/
 *.db
-*.exe
-
+data/cve_sample.json
+data/reports/*.pdf
+__pycache__/
+*.pyc

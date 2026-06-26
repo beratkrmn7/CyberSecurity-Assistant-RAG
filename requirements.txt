@@ -1,6 +1,6 @@
+foundry-local-sdk
 streamlit
 numpy
-foundry-local-sdk
 python-dotenv
-sentence-transformers
 requests
+PyPDF2

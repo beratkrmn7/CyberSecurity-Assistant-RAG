@@ -1,6 +1,7 @@
 # Siber Güvenlik Asistanı (Local LLM RAG)
 
-Bu proje, yerel bir LLM (Büyük Dil Modeli) ve RAG (Retrieval-Augmented Generation) mimarisi kullanılarak geliştirilmiş bir Siber Güvenlik Asistanıdır. Amacı, güncel CVE (Ortak Güvenlik Açıkları ve Etkilenmeler) kayıtlarını ve siber tehdit istihbarat raporlarını analiz ederek kullanıcılara güvenli, yerel ve hızlı cevaplar sunmaktır.
+Bu proje, yerel bir LLM (Büyük Dil Modeli) ve RAG (Retrieval-Augmented Generation) mimarisi kullanılarak geliştirilmiş bir Uzman Siber Güvenlik Asistanıdır. 
+Asistan sadece güncel CVE (Ortak Güvenlik Açıkları ve Etkilenmeler) kayıtlarını sorgulamakla kalmaz, aynı zamanda `data/reports/` dizinine eklediğiniz APT veya Siber Tehdit İstihbarat (CTI) PDF raporlarını da okuyup özetleyerek kullanıcılara güvenli, yerel ve hızlı cevaplar sunar.
 
 Microsoft Yaz Stajı "Azure Foundry Local LLM" projesi kapsamında geliştirilmektedir.
 
@@ -11,17 +12,28 @@ Microsoft Yaz Stajı "Azure Foundry Local LLM" projesi kapsamında geliştirilme
 - **Microsoft Foundry Local SDK**: Yerel LLM (`qwen2.5-1.5b`) ve Embedding (`qwen3-embedding-0.6b`) modellerinin yönetimi için.
 - **SQLite**: Vektör veritabanı olarak metin parçacıklarını ve embedding vektörlerini saklamak için.
 - **NumPy**: Vektörler arası kosinüs benzerliği (cosine similarity) hesaplamaları için.
+- **PyPDF2**: Yüklenen yerel PDF raporlarını metne dönüştürmek için.
 
 *(Not: Projede LangChain veya ChromaDB yerine tamamen Foundry Local SDK ve yerel SQLite entegrasyonu kullanılmıştır.)*
 
 ## Proje Yapısı
 
-- `00_fetch_nvd_data.py`: (Opsiyonel ama Önerilen) NVD API (Ulusal Zafiyet Veritabanı) üzerinden en güncel ve kritik 50 CVE kaydını çekerek `data/cve_sample.json` dosyasını otomatik günceller.
-- `01_data_ingestion.py`: JSON formatındaki CVE verilerini işleme, parçalama (chunking), embedding oluşturma ve SQLite veritabanına kaydetme adımlarını içerir. Gerekli dil modellerini de yerel ortama indirir.
-- `app.py`: Streamlit tabanlı, modern web arayüzü. Yerel LLM ile sohbet ve vektör tabanlı bilgi araması burada gerçekleşir.
-- `02_rag_assistant.py`: (Opsiyonel) CLI üzerinden temel RAG sistemini test etmek için betik.
+```
+CyberSecurity-Assistant-RAG/
+├── 00_fetch_nvd_data.py
+├── 01_data_ingestion.py       # PDF + CVE verilerini veritabanına işler
+├── 02_rag_assistant.py        # Terminal üzerinden test betiği
+├── app.py                     # Streamlit web arayüzü
+├── rag_core.py                # Ortak RAG (retrieval + LLM) mantığı
+├── knowledge_base.db          # SQLite vektör veritabanı
+├── .env / .env.example
+├── requirements.txt
+└── data/
+    ├── cve_sample.json        # 00_fetch_nvd_data ile çekilen veriler
+    └── reports/               # İstihbarat PDF'lerini atacağınız klasör
+```
 
-## Kurulum
+## Kurulum ve Çalıştırma Sırası
 
 1. Depoyu klonlayın ve klasöre girin:
 ```bash
@@ -29,26 +41,37 @@ git clone https://github.com/beratkrmn7/CyberSecurity-Assistant-RAG.git
 cd CyberSecurity-Assistant-RAG
 ```
 
-2. Sanal ortam oluşturup aktif edin ve gereksinimleri yükleyin (Windows):
+2. Sanal ortam oluşturup bağımlılıkları yükleyin:
 ```bash
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Kullanım
+3. Çevre değişkenlerini `.env.example` dosyasından kopyalayarak oluşturun:
+```bash
+copy .env.example .env
+```
+*(Windows için `copy`, Linux/Mac için `cp` kullanın. NVD_API_KEY değerinizi `.env` dosyasına ekleyebilirsiniz.)*
 
-1. *(Opsiyonel)* NVD API üzerinden güncel zafiyetleri çekip veri setinizi zenginleştirmek için önce şu betiği çalıştırın:
+4. NVD API üzerinden güncel CVE zafiyet verilerini çekin:
 ```bash
 python 00_fetch_nvd_data.py
 ```
 
-2. Ardından veritabanını (`knowledge_base.db`) oluşturmak ve LLM modellerini indirmek için veri yükleme betiğini çalıştırın:
+5. (İsteğe Bağlı) Okunmasını istediğiniz Tehdit İstihbarat raporlarını veya güvenlik yönergelerini (PDF formatında) `data/reports/` klasörünün içine atın. 
+
+6. Ardından veritabanını oluşturmak ve verileri (CVE + PDF) vektörlemek için veri yükleme betiğini çalıştırın:
 ```bash
 python 01_data_ingestion.py
 ```
 
-2. İşlem tamamlandıktan sonra asistanın web arayüzünü başlatın:
+7. RAG sistemini terminalden hızlıca test edin:
+```bash
+python 02_rag_assistant.py
+```
+
+8. Her şey hazır olduğunda asistanın modern web arayüzünü başlatın:
 ```bash
 streamlit run app.py
 ```
