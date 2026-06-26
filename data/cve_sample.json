@@ -1,23 +1,352 @@
 [
-  {
-    "cve_id": "CVE-2021-44228",
-    "description": "Apache Log4j2 (2.14.1 ve öncesi) sürümlerinde konfigürasyon, log mesajları ve parametrelerde kullanılan JNDI özellikleri, saldırgan kontrollü LDAP ve diğer JNDI tabanlı uç noktalara karşı koruma sağlamaz. Log mesajlarını veya log parametrelerini kontrol edebilen bir saldırgan, sistemde rastgele kod çalıştırabilir ve sunucuyu tamamen ele geçirebilir. Bu zafiyet Log4Shell olarak bilinir.",
-    "severity": "CRITICAL",
-    "cvss_score": 10.0,
-    "published_date": "2021-12-10"
-  },
-  {
-    "cve_id": "CVE-2024-3094",
-    "description": "XZ Utils kütüphanesinin (5.6.0 sürümünden itibaren) kaynak kodlarında gizlenmiş zararlı bir arka kapı (backdoor) kod keşfedildi. Derleme işlemi sırasında liblzma içindeki bazı fonksiyonlar değiştirilerek sisteme sızılır. Bu durum, liblzma kütüphanesini kullanan SSH gibi yazılımların veri etkileşimlerinin ele geçirilmesine ve saldırganın sisteme yetkisiz erişimine olanak tanır.",
-    "severity": "CRITICAL",
-    "cvss_score": 10.0,
-    "published_date": "2024-03-29"
-  },
-  {
-    "cve_id": "CVE-2017-0144",
-    "description": "Microsoft Windows (Vista, 7, 8.1, 10) ve Windows Server işletim sistemlerindeki SMBv1 sunucusu, uzaktaki saldırganların ağ üzerinden özel olarak hazırlanmış paketler göndererek rastgele kod çalıştırmasına (Remote Code Execution) izin verir. Bu zafiyet 'EternalBlue' aracı tarafından aktif olarak sömürülmüş ve WannaCry fidye yazılımının yayılmasına sebep olmuştur.",
-    "severity": "CRITICAL",
-    "cvss_score": 8.1,
-    "published_date": "2017-03-16"
-  }
+    {
+        "cve_id": "CVE-1999-0426",
+        "description": "The default permissions of /dev/kmem in Linux versions before 2.0.36 allows IP spoofing.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "1999-03-01"
+    },
+    {
+        "cve_id": "CVE-1999-1324",
+        "description": "VAXstations running Open VMS 5.3 through 5.5-2 with VMS DECwindows or MOTIF do not properly disable access to user accounts that exceed the break-in limit threshold for failed login attempts, which makes it easier for attackers to conduct brute force password guessing.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "1999-12-31"
+    },
+    {
+        "cve_id": "CVE-2000-1218",
+        "description": "The default configuration for the domain name resolver for Microsoft Windows 98, NT 4.0, 2000, and XP sets the QueryIpMatching parameter to 0, which causes Windows to accept DNS updates from hosts that it did not query, which allows remote attackers to poison the DNS cache.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2000-04-14"
+    },
+    {
+        "cve_id": "CVE-2000-0944",
+        "description": "CGI Script Center News Update 1.1 does not properly validate the original news administration password during a password change operation, which allows remote attackers to modify the password without knowing the original password.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2000-12-19"
+    },
+    {
+        "cve_id": "CVE-2001-1339",
+        "description": "Beck IPC GmbH IPC@CHIP telnet service does not delay or disconnect users from the service when bad passwords are entered, which makes it easier for remote attackers to conduct brute force password guessing attacks.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-05-24"
+    },
+    {
+        "cve_id": "CVE-2001-0248",
+        "description": "Buffer overflow in FTP server in HPUX 11 allows remote attackers to execute arbitrary commands by creating a long pathname and calling the STAT command, which uses glob to generate long strings.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-06-18"
+    },
+    {
+        "cve_id": "CVE-2001-0249",
+        "description": "Heap overflow in FTP daemon in Solaris 8 allows remote attackers to execute arbitrary commands by creating a long pathname and calling the LIST command, which uses glob to generate long strings.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-06-18"
+    },
+    {
+        "cve_id": "CVE-2001-0395",
+        "description": "Lightwave ConsoleServer 3200 does not disconnect users after unsuccessful login attempts, which could allow remote attackers to conduct brute force password guessing.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-07-02"
+    },
+    {
+        "cve_id": "CVE-2001-1291",
+        "description": "The telnet server for 3Com hardware such as PS40 SuperStack II does not delay or disconnect remote attackers who provide an incorrect username or password, which makes it easier to break into the server via brute force password guessing.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-07-12"
+    },
+    {
+        "cve_id": "CVE-2001-0609",
+        "description": "Format string vulnerability in Infodrom cfingerd 1.4.3 and earlier allows a remote attacker to gain additional privileges via a malformed ident reply that is passed to the syslog function.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-08-02"
+    },
+    {
+        "cve_id": "CVE-2001-1155",
+        "description": "TCP Wrappers (tcp_wrappers) in FreeBSD 4.1.1 through 4.3 with the PARANOID ACL option enabled does not properly check the result of a reverse DNS lookup, which could allow remote attackers to bypass intended access restrictions via DNS spoofing.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-08-23"
+    },
+    {
+        "cve_id": "CVE-2001-0967",
+        "description": "Knox Arkeia server 4.2, and possibly other versions, uses a constant salt when encrypting passwords using the crypt() function, which makes it easier for an attacker to conduct brute force password guessing.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-08-31"
+    },
+    {
+        "cve_id": "CVE-2001-1125",
+        "description": "Symantec LiveUpdate before 1.6 does not use cryptography to ensure the integrity of download files, which allows remote attackers to execute arbitrary code via DNS spoofing of the update.symantec.com site.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-10-05"
+    },
+    {
+        "cve_id": "CVE-2001-0766",
+        "description": "Apache on MacOS X Client 10.0.3 with the HFS+ file system allows remote attackers to bypass access restrictions via a URL that contains some characters whose case is not matched by Apache's filters.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-10-18"
+    },
+    {
+        "cve_id": "CVE-2001-1481",
+        "description": "Xitami 2.4 through 2.5 b4 stores the Administrator password in plaintext in the default.aut file, whose default permissions are world-readable, which allows remote attackers to gain privileges.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-12-31"
+    },
+    {
+        "cve_id": "CVE-2001-1496",
+        "description": "Off-by-one buffer overflow in Basic Authentication in Acme Labs thttpd 1.95 through 2.20 allows remote attackers to cause a denial of service and possibly execute arbitrary code.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2001-12-31"
+    },
+    {
+        "cve_id": "CVE-2002-0059",
+        "description": "The decompression algorithm in zlib 1.1.3 and earlier, as used in many different utilities and packages, causes inflateEnd to release certain memory more than once (a \"double free\"), which may allow local and remote attackers to execute arbitrary code via a block of malformed compression data.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2002-03-15"
+    },
+    {
+        "cve_id": "CVE-2002-0083",
+        "description": "Off-by-one error in the channel code of OpenSSH 2.0 through 3.0.2 allows local users or remote malicious servers to gain privileges.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2002-03-15"
+    },
+    {
+        "cve_id": "CVE-2002-0639",
+        "description": "Integer overflow in sshd in OpenSSH 2.9.9 through 3.3 allows remote attackers to execute arbitrary code during challenge response authentication (ChallengeResponseAuthentication) when OpenSSH is using SKEY or BSD_AUTH authentication.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2002-07-03"
+    },
+    {
+        "cve_id": "CVE-2002-0671",
+        "description": "Pingtel xpressa SIP-based voice-over-IP phone 1.2.5 through 1.2.7.4 downloads phone applications from a web site but can not verify the integrity of the applications, which could allow remote attackers to install Trojan horse applications via DNS spoofing.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2002-07-23"
+    },
+    {
+        "cve_id": "CVE-2002-0391",
+        "description": "Integer overflow in xdr_array function in RPC servers for operating systems that use libc, glibc, or other code based on SunRPC including dietlibc, allows remote attackers to execute arbitrary code by passing a large number of arguments to xdr_array through RPC services such as rpc.cmsd and dmispd.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2002-08-12"
+    },
+    {
+        "cve_id": "CVE-2002-1347",
+        "description": "Multiple buffer overflows in Cyrus SASL library 2.1.9 and earlier allow remote attackers to cause a denial of service and possibly execute arbitrary code via (1) long inputs during user name canonicalization, (2) characters that need to be escaped during LDAP authentication using saslauthd, or (3) an off-by-one error in the log writer, which does not allocate space for the null character that terminates a string.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2002-12-18"
+    },
+    {
+        "cve_id": "CVE-2002-1798",
+        "description": "MidiCart PHP, PHP Plus, and PHP Maxi allows remote attackers to (1) upload arbitrary php files via a direct request to admin/upload.php or (2) access sensitive information via a direct request to admin/credit_card_info.php.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.1,
+        "published_date": "2002-12-31"
+    },
+    {
+        "cve_id": "CVE-2002-1816",
+        "description": "Off-by-one buffer overflow in the sock_gets function in sockhelp.c for ATPhttpd 0.4b and earlier allows remote attackers to execute arbitrary code via a long HTTP GET request.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2002-12-31"
+    },
+    {
+        "cve_id": "CVE-2002-1820",
+        "description": "register.php in Ultimate PHP Board (UPB) 1.0 and 1.0b uses an administrative account Admin with a capital \"A,\" but allows a remote attacker to impersonate the administrator by registering an account name of admin with a lower case \"a.\"",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2002-12-31"
+    },
+    {
+        "cve_id": "CVE-2002-2119",
+        "description": "Novell eDirectory 8.6.2 and 8.7 use case insensitive passwords, which makes it easier for remote attackers to conduct brute force password guessing.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2002-12-31"
+    },
+    {
+        "cve_id": "CVE-2002-1484",
+        "description": "DB4Web server, when configured to use verbose debug messages, allows remote attackers to use DB4Web as a proxy and attempt TCP connections to other systems (port scan) via a request for a URL that specifies the target IP address and port, which produces a connection status in the resulting error message.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2003-04-22"
+    },
+    {
+        "cve_id": "CVE-2003-0174",
+        "description": "The LDAP name service (nsd) in IRIX 6.5.19 and earlier does not properly verify if the USERPASSWORD attribute has been provided by an LDAP server, which could allow attackers to log in without a password.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2003-05-12"
+    },
+    {
+        "cve_id": "CVE-2003-0356",
+        "description": "Multiple off-by-one vulnerabilities in Ethereal 0.9.11 and earlier allow remote attackers to cause a denial of service and possibly execute arbitrary code via the (1) AIM, (2) GIOP Gryphon, (3) OSPF, (4) PPTP, (5) Quake, (6) Quake2, (7) Quake3, (8) Rsync, (9) SMB, (10) SMPP, and (11) TSP dissectors, which do not properly use the tvb_get_nstringz and tvb_get_nstringz0 functions.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2003-06-09"
+    },
+    {
+        "cve_id": "CVE-2003-0252",
+        "description": "Off-by-one error in the xlog function of mountd in the Linux NFS utils package (nfs-utils) before 1.0.4 allows remote attackers to cause a denial of service and possibly execute arbitrary code via certain RPC requests to mountd that do not contain newlines.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2003-08-18"
+    },
+    {
+        "cve_id": "CVE-2003-0466",
+        "description": "Off-by-one error in the fb_realpath() function, as derived from the realpath function in BSD, may allow attackers to execute arbitrary code, as demonstrated in wu-ftpd 2.5.0 through 2.6.2 via commands that cause pathnames of length MAXPATHLEN+1 to trigger a buffer overflow, including (1) STOR, (2) RETR, (3) APPE, (4) DELE, (5) MKD, (6) RMD, (7) STOU, or (8) RNTO.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2003-08-27"
+    },
+    {
+        "cve_id": "CVE-2003-0791",
+        "description": "The Script.prototype.freeze/thaw functionality in Mozilla 1.4 and earlier allows attackers to execute native methods by modifying the string used as input to the script.thaw JavaScript function, which is then deserialized and executed.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2003-10-07"
+    },
+    {
+        "cve_id": "CVE-2003-0899",
+        "description": "Buffer overflow in defang in libhttpd.c for thttpd 2.21 to 2.23b1 allows remote attackers to execute arbitrary code via requests that contain '<' or '>' characters, which trigger the overflow when the characters are expanded to \"&lt;\" and \"&gt;\" sequences.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2003-11-03"
+    },
+    {
+        "cve_id": "CVE-2003-0545",
+        "description": "Double free vulnerability in OpenSSL 0.9.7 allows remote attackers to cause a denial of service (crash) and possibly execute arbitrary code via an SSL client certificate with a certain invalid ASN.1 encoding.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2003-11-17"
+    },
+    {
+        "cve_id": "CVE-2003-1233",
+        "description": "Pedestal Software Integrity Protection Driver (IPD) 1.3 and earlier allows privileged attackers, such as rootkits, to bypass file access restrictions to the Windows kernel by using the NtCreateSymbolicLinkObject function to create a symbolic link to (1) \\Device\\PhysicalMemory or (2) to a drive letter using the subst command.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2003-12-31"
+    },
+    {
+        "cve_id": "CVE-2004-0030",
+        "description": "PHP remote file inclusion vulnerability in (1) functions.php, (2) authentication_index.php, and (3) config_gedcom.php for PHPGEDVIEW 2.61 allows remote attackers to execute arbitrary PHP code by modifying the PGV_BASE_DIRECTORY parameter to reference a URL on a remote web server that contains the code.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-01-20"
+    },
+    {
+        "cve_id": "CVE-2004-0005",
+        "description": "Multiple buffer overflows in Gaim 0.75 allow remote attackers to cause a denial of service and possibly execute arbitrary code via (1) octal encoding in yahoo_decode that causes a null byte to be written beyond the buffer, (2) octal encoding in yahoo_decode that causes a pointer to reference memory beyond the terminating null byte, (3) a quoted printable string to the gaim_quotedp_decode MIME decoder that causes a null byte to be written beyond the buffer, and (4) quoted printable encoding in gaim_quotedp_decode that causes a pointer to reference memory beyond the terminating null byte.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-03-03"
+    },
+    {
+        "cve_id": "CVE-2004-0434",
+        "description": "k5admind (kadmind) for Heimdal allows remote attackers to execute arbitrary code via a Kerberos 4 compatibility administration request whose framing length is less than 2, which leads to a heap-based buffer overflow.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-07-07"
+    },
+    {
+        "cve_id": "CVE-2004-2061",
+        "description": "RiSearch 1.0.01 and RiSearch Pro 3.2.06 allows remote attackers to use the show.pl script as an open proxy, or read arbitrary local files, by setting the url parameter to a (1) http://, (2) ftp://, or (3) file:// URL.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-07-27"
+    },
+    {
+        "cve_id": "CVE-2004-1363",
+        "description": "Buffer overflow in extproc in Oracle 10g allows remote attackers to execute arbitrary code via environment variables in the library name, which are expanded after the length check is performed.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-08-04"
+    },
+    {
+        "cve_id": "CVE-2004-0772",
+        "description": "Double free vulnerabilities in error handling code in krb524d for MIT Kerberos 5 (krb5) 1.2.8 and earlier may allow remote attackers to execute arbitrary code.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-10-20"
+    },
+    {
+        "cve_id": "CVE-2004-0847",
+        "description": "The Microsoft .NET forms authentication capability for ASP.NET allows remote attackers to bypass authentication for .aspx files in restricted directories via a request containing a (1) \"\\\" (backslash) or (2) \"%5C\" (encoded backslash), aka \"Path Validation Vulnerability.\"",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-11-03"
+    },
+    {
+        "cve_id": "CVE-2004-0285",
+        "description": "PHP remote file inclusion vulnerabilities in include/footer.inc.php in (1) AllMyVisitors, (2) AllMyLinks, and (3) AllMyGuests allow remote attackers to execute arbitrary PHP code via a URL in the _AMVconfig[cfg_serverpath] parameter.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-11-23"
+    },
+    {
+        "cve_id": "CVE-2004-2154",
+        "description": "CUPS before 1.1.21rc1 treats a Location directive in cupsd.conf as case sensitive, which allows attackers to bypass intended ACLs via a printer name containing uppercase or lowercase letters that are different from what is specified in the directive.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-12-31"
+    },
+    {
+        "cve_id": "CVE-2004-2214",
+        "description": "Mbedthis AppWeb HTTP server before 1.1.3 allows remote attackers to bypass access restrictions via a URI with mixed case characters.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2004-12-31"
+    },
+    {
+        "cve_id": "CVE-2005-0102",
+        "description": "Integer overflow in camel-lock-helper in Evolution 2.0.2 and earlier allows local users or remote malicious POP3 servers to execute arbitrary code via a length value of -1, which leads to a zero byte memory allocation and a buffer overflow.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2005-01-24"
+    },
+    {
+        "cve_id": "CVE-2005-0408",
+        "description": "CitrusDB 0.3.6 and earlier generates easily predictable MD5 hashes of the user name for the id_hash cookie, which allows remote attackers to bypass authentication and gain privileges by calculating the MD5 checksum of the user name combined with the \"boogaadeeboo\" string, which is hard-coded in the $hidden_hash variable.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2005-02-14"
+    },
+    {
+        "cve_id": "CVE-2005-0496",
+        "description": "Arkeia Network Backup Client 5.x contains hard-coded credentials that effectively serve as a back door, which allows remote attackers to access the file system and possibly execute arbitrary commands.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2005-02-21"
+    },
+    {
+        "cve_id": "CVE-2005-1141",
+        "description": "Integer overflow in the readpgm function in pnm.c for GOCR 0.40, when using the netpbm library, allows remote attackers to execute arbitrary code via a PNM file with large width and height values, which leads to a heap-based buffer overflow.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2005-04-15"
+    },
+    {
+        "cve_id": "CVE-2005-0199",
+        "description": "Integer underflow in the Lists_MakeMask() function in lists.c in ngIRCd before 0.8.2 allows remote attackers to cause a denial of service (application crash) and possibly execute arbitrary code via a long MODE line that causes an incorrect length calculation, which leads to a buffer overflow.",
+        "severity": "CRITICAL",
+        "cvss_score": 9.8,
+        "published_date": "2005-05-02"
+    }
 ]

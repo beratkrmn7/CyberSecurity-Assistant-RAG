@@ -16,6 +16,7 @@ Microsoft Yaz Stajı "Azure Foundry Local LLM" projesi kapsamında geliştirilme
 
 ## Proje Yapısı
 
+- `00_fetch_nvd_data.py`: (Opsiyonel ama Önerilen) NVD API (Ulusal Zafiyet Veritabanı) üzerinden en güncel ve kritik 50 CVE kaydını çekerek `data/cve_sample.json` dosyasını otomatik günceller.
 - `01_data_ingestion.py`: JSON formatındaki CVE verilerini işleme, parçalama (chunking), embedding oluşturma ve SQLite veritabanına kaydetme adımlarını içerir. Gerekli dil modellerini de yerel ortama indirir.
 - `app.py`: Streamlit tabanlı, modern web arayüzü. Yerel LLM ile sohbet ve vektör tabanlı bilgi araması burada gerçekleşir.
 - `02_rag_assistant.py`: (Opsiyonel) CLI üzerinden temel RAG sistemini test etmek için betik.
@@ -37,7 +38,12 @@ pip install -r requirements.txt
 
 ## Kullanım
 
-1. Öncelikle veritabanını (`knowledge_base.db`) oluşturmak ve LLM modellerini indirmek için veri yükleme betiğini çalıştırın:
+1. *(Opsiyonel)* NVD API üzerinden güncel zafiyetleri çekip veri setinizi zenginleştirmek için önce şu betiği çalıştırın:
+```bash
+python 00_fetch_nvd_data.py
+```
+
+2. Ardından veritabanını (`knowledge_base.db`) oluşturmak ve LLM modellerini indirmek için veri yükleme betiğini çalıştırın:
 ```bash
 python 01_data_ingestion.py
 ```
