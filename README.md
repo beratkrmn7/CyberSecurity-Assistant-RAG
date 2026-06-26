@@ -56,19 +56,19 @@ copy .env.example .env
 
 4. NVD API üzerinden güncel CVE zafiyet verilerini çekin:
 ```bash
-python 00_fetch_nvd_data.py
+python scripts/fetch_nvd.py
 ```
 
 5. (İsteğe Bağlı) Okunmasını istediğiniz Tehdit İstihbarat raporlarını veya güvenlik yönergelerini (PDF formatında) `data/reports/` klasörünün içine atın. 
 
 6. Ardından veritabanını oluşturmak ve verileri (CVE + PDF) vektörlemek için veri yükleme betiğini çalıştırın:
 ```bash
-python 01_data_ingestion.py
+python scripts/ingest_data.py
 ```
 
 7. RAG sistemini terminalden hızlıca test edin:
 ```bash
-python 02_rag_assistant.py
+CLI Arayüzü: `python cli_app.py`
 ```
 
 8. Her şey hazır olduğunda asistanın modern web arayüzünü başlatın:
