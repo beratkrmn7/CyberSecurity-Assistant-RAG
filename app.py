@@ -1,5 +1,6 @@
 import streamlit as st
-from src.rag_core import answer_query
+import os
+from src.rag_core import answer_query, ingest_single_pdf
 
 st.set_page_config(
     page_title="Siber Güvenlik Asistanı",
@@ -12,6 +13,19 @@ st.caption("CVE veritabanı ve tehdit istihbarat raporlarını sorgula — tamam
 
 # Sidebar — filtre
 with st.sidebar:
+    st.header("PDF Yükle")
+    uploaded_file = st.file_uploader("Yeni CTI / Rapor Ekle", type=["pdf"])
+    if uploaded_file is not None:
+        save_path = os.path.join("data", "reports", uploaded_file.name)
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        with open(save_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        
+        with st.spinner(f"{uploaded_file.name} işleniyor..."):
+            ingest_single_pdf(save_path)
+        st.success(f"'{uploaded_file.name}' veritabanına eklendi!")
+
+    st.markdown("---")
     st.header("Ayarlar")
     show_sources = st.toggle("Kaynakları göster", value=True)
     st.markdown("---")
@@ -46,7 +60,7 @@ if query:
 
     with st.chat_message("assistant"):
         with st.spinner("Model yanıt üretiyor... (Donanım hızına bağlı olarak 30-50sn sürebilir)"):
-            result = answer_query(query)
+            result = answer_query(query, chat_history=st.session_state.messages[:-1])
 
         st.write(result["answer"])
 

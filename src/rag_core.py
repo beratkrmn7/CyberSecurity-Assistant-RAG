@@ -2,6 +2,7 @@ import json, sqlite3, os, numpy as np
 from dotenv import load_dotenv
 from foundry_local_sdk import Configuration, FoundryLocalManager
 import streamlit as st
+import PyPDF2
 
 load_dotenv()
 
@@ -73,7 +74,50 @@ def get_top_chunks(query: str, top_k: int = TOP_K):
 
     return results
 
-def answer_query(question: str) -> dict:
+def chunk_text(text, chunk_size=150, overlap=30):
+    words  = text.split()
+    chunks = []
+    start  = 0
+    while start < len(words):
+        end = start + chunk_size
+        chunks.append(" ".join(words[start:end]))
+        start += chunk_size - overlap
+    return chunks
+
+def ingest_single_pdf(pdf_path: str):
+    """Tek bir PDF dosyasını okur, parçalar, vektörler ve veritabanına ekler."""
+    _, _, embed_client = get_manager_and_clients()
+    conn = sqlite3.connect(DB_PATH)
+    
+    # Read PDF
+    with open(pdf_path, "rb") as f:
+        reader = PyPDF2.PdfReader(f)
+        full_text = ""
+        for page in reader.pages:
+            full_text += page.extract_text() + "\n"
+            
+    # Chunking
+    chunks = chunk_text(full_text, chunk_size=150, overlap=30)
+    pdf_file = os.path.basename(pdf_path)
+    
+    # Embedding and Inserting
+    for i, chunk in enumerate(chunks):
+        if len(chunk.strip()) < 50:
+            continue
+        vector_result = embed_client.generate_embedding(chunk)
+        embedding = vector_result.data[0].embedding
+        conn.execute(
+            "INSERT INTO chunks (source, source_id, severity, chunk_text, embedding) VALUES (?,?,?,?,?)",
+            (pdf_file, f"chunk_{i}", None, chunk, json.dumps(embedding))
+        )
+        
+    conn.commit()
+    conn.close()
+    
+    # Ön belleği temizle ki yeni vektörler aramaya dahil olsun
+    load_all_embeddings.clear()
+
+def answer_query(question: str, chat_history: list = None) -> dict:
     """
     Soru alır, ilgili chunk'ları bulur, LLM'e sorar.
     """
@@ -112,16 +156,24 @@ Soru: {question}
 
 Lütfen bağlamdaki bilgilere dayanarak detaylı bir Türkçe yanıt ver."""
 
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user",   "content": user_prompt}
-    ]
+    messages = [{"role": "system", "content": system_prompt}]
+    
+    if chat_history:
+        # Sadece son 6 mesajı (3 tur) al ki context sınırı aşılmasın
+        for msg in chat_history[-6:]:
+            messages.append({"role": msg["role"], "content": msg["content"]})
+            
+    messages.append({"role": "user", "content": user_prompt})
 
     # Doğru Foundry Local API kullanımı
-    chat_client.settings.max_tokens = 300  # Daha hızlı bitmesi için 600'den 300'e çektik
-    chat_client.settings.temperature = 0.1
-    if hasattr(chat_client.settings, "timeout"):
-        chat_client.settings.timeout = 300 
+    chat_client.settings.max_tokens = 600
+    chat_client.settings.temperature = 0.7  
+    if hasattr(chat_client.settings, "top_p"):
+        chat_client.settings.top_p = 0.95
+    if hasattr(chat_client.settings, "frequency_penalty"):
+        chat_client.settings.frequency_penalty = 1.0  # Aynı kelimeyi tekrar etmeyi kesin engeller
+    if hasattr(chat_client.settings, "presence_penalty"):
+        chat_client.settings.presence_penalty = 1.0
         
     try:
         response_obj = chat_client.complete_chat(messages)
@@ -130,6 +182,9 @@ Lütfen bağlamdaki bilgilere dayanarak detaylı bir Türkçe yanıt ver."""
         else:
             answer = "Cevap üretilemedi."
     except Exception as e:
-        answer = f"Model yanıt verirken bir hata oluştu: {str(e)}"
+        if "cancelled" in str(e).lower() or "canceled" in str(e).lower():
+            answer = f"Model yanıt üretirken işlem iptal edildi veya zaman aşımına uğradı (Timeout). Lütfen soruyu tekrar sorun."
+        else:
+            answer = f"Model yanıt verirken bir hata oluştu: {str(e)}"
 
     return {"answer": answer, "sources": sources}
